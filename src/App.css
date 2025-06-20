@@ -12,6 +12,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f9fafb;
+  color: #1f2937; /* Added default dark text color */
 }
 
 /* Utility classes for Tailwind-like functionality */
@@ -294,6 +295,8 @@ input, textarea, select {
   font-size: 0.875rem;
   line-height: 1.25rem;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  color: #1f2937; /* Added dark text color for form elements */
+  background-color: #ffffff; /* Ensure white background */
 }
 
 input:focus, textarea:focus, select:focus {
@@ -336,6 +339,7 @@ button {
   transition: background-color 0.15s ease-in-out;
   border: none;
   cursor: pointer;
+  color: #ffffff; /* Ensure button text is white by default */
 }
 
 button:disabled {
@@ -430,8 +434,17 @@ button:disabled {
   height: 100%;
 }
 
+/* FIXED: Improved contrast for gray text colors */
 .text-gray-300 {
-  color: #d1d5db;
+  color: #6b7280; /* Changed from #d1d5db to darker gray for better contrast */
+}
+
+.text-gray-400 {
+  color: #4b5563; /* Changed from #9ca3af to darker gray for better contrast */
+}
+
+.text-gray-600 {
+  color: #4b5563;
 }
 
 /* Alert styles */
@@ -575,14 +588,6 @@ button:disabled {
   background-color: #f3f4f6;
 }
 
-.text-gray-600 {
-  color: #4b5563;
-}
-
-.text-gray-400 {
-  color: #9ca3af;
-}
-
 .py-12 {
   padding-top: 3rem;
   padding-bottom: 3rem;
@@ -614,7 +619,7 @@ button:disabled {
 
 /* Focus effects */
 .focus\:ring-blue-500:focus {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); /* Fixed rgba values */
 }
 
 /* Pre tag styling */
@@ -626,6 +631,7 @@ pre {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.875rem;
   line-height: 1.5;
+  color: #1f2937; /* Added dark text color for code blocks */
 }
 
 /* Check icons */
@@ -660,6 +666,25 @@ pre {
 
 .w-\[8rem\] {
   width: 8rem;
+}
+
+/* ADDED: Dark text colors for better contrast */
+.text-gray-900 {
+  color: #111827;
+}
+
+.text-gray-800 {
+  color: #1f2937;
+}
+
+/* ADDED: Ensure specific elements have proper text colors */
+p, div, span, h1, h2, h3, h4, h5, h6 {
+  color: inherit;
+}
+
+/* Override for elements that should be dark by default */
+.default-text {
+  color: #1f2937;
 }
 
 .toLocaleString {
