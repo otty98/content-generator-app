@@ -25,7 +25,7 @@ const MarketingCopyGenerator = () => {
   const [error, setError] = useState('');
 
   // Check for API key on component mount
-  useEffect(() => {
+  useEffect(() => { 
       const hasApiKey = import.meta?.env?.VITE_GEMINI_API_KEY;
       if (!hasApiKey) {
         console.warn('Gemini API key not found. Using mock data mode.');
