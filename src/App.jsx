@@ -26,11 +26,11 @@ const MarketingCopyGenerator = () => {
 
   // Check for API key on component mount
   useEffect(() => {
-    const hasApiKey = import.meta?.env?.VITE_OPENROUTER_API_KEY;
-    if (!hasApiKey) {
-      console.warn('OpenRouter API key not found. Using mock data mode.');
-    }
-  }, []);
+      const hasApiKey = import.meta?.env?.VITE_GEMINI_API_KEY;
+      if (!hasApiKey) {
+        console.warn('Gemini API key not found. Using mock data mode.');
+      }
+    }, []);
 
   // Prompt Templates with Advanced Engineering
   const promptTemplates = {
@@ -212,118 +212,113 @@ Generate the press release:`
   let lastRequestTime = 0;
 
   const generateContent = async () => {
-    const now = Date.now();
-    
-    // Rate limiting (10 seconds between requests for better UX)
-    if (now - lastRequestTime < 10000) {
-      const secondsLeft = Math.ceil((10000 - (now - lastRequestTime)) / 1000);
-      setError(`Please wait ${secondsLeft} seconds before generating again`);
-      return;
+  const now = Date.now();
+  
+  // Rate limiting (10 seconds between requests for better UX)
+  if (now - lastRequestTime < 10000) {
+    const secondsLeft = Math.ceil((10000 - (now - lastRequestTime)) / 1000);
+    setError(`Please wait ${secondsLeft} seconds before generating again`);
+    return;
+  }
+
+  lastRequestTime = now;
+  setIsGenerating(true);
+  setError('');
+  const startTime = Date.now();
+
+  try {
+    // Validate inputs
+    if (!inputs.productName.trim()) {
+      throw new Error('Product name is required');
     }
 
-    lastRequestTime = now;
-    setIsGenerating(true);
-    setError('');
-    const startTime = Date.now();
-
-    try {
-      // Validate inputs
-      if (!inputs.productName.trim()) {
-        throw new Error('Product name is required');
-      }
-
-      // Check if API key exists
-      const apiKey = import.meta?.env?.VITE_OPENROUTER_API_KEY;
-      
-      if (!apiKey) {
-        // Fallback to mock data if no API key
-        console.warn('No API key found, generating mock content...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const mockContent = generateSampleContent(selectedTemplate, inputs);
-        setGeneratedContent(mockContent);
-        setGenerationStats(prev => ({
-          tokensUsed: prev.tokensUsed + Math.floor(mockContent.length / 4),
-          timeElapsed: Date.now() - startTime,
-          requestCount: prev.requestCount + 1
-        }));
-        return;
-      }
-
-      // Build the prompt
-      const prompt = buildPrompt(selectedTemplate, inputs);
-
-      // API call with better error handling
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'AI Marketing Copy Generator'
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-3.5-turbo",
-          messages: [
-            { 
-              role: "system", 
-              content: "You are a skilled marketing copywriter specializing in high-converting content. Always provide actionable, specific, and engaging copy that drives results." 
-            },
-            { role: "user", content: prompt }
-          ],
-          temperature: 0.7,
-          max_tokens: 1500
-        })
-      });
-
-      if (!response.ok) {
-        let errorMessage = `API Error: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error?.message || errorData.message || errorMessage;
-        } catch {
-          // If can't parse error, use status
-        }
-        throw new Error(errorMessage);
-      }
-
-      const result = await response.json();
-      const content = result.choices?.[0]?.message?.content;
-      
-      if (!content) {
-        throw new Error('No content generated from API');
-      }
-      
-      // Update stats and content
-      setGeneratedContent(content);
+    // Check if API key exists
+    const apiKey = import.meta?.env?.VITE_GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      // Fallback to mock data if no API key
+      console.warn('No API key found, generating mock content...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const mockContent = generateSampleContent(selectedTemplate, inputs);
+      setGeneratedContent(mockContent);
       setGenerationStats(prev => ({
-        tokensUsed: prev.tokensUsed + (result.usage?.total_tokens || Math.floor(content.length / 4)),
+        tokensUsed: prev.tokensUsed + Math.floor(mockContent.length / 4),
         timeElapsed: Date.now() - startTime,
         requestCount: prev.requestCount + 1
       }));
-
-    } catch (err) {
-      console.error('Generation error:', err);
-      setError(`Generation failed: ${err.message}`);
-      
-      // Fallback to mock data on any error
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        const fallbackContent = generateSampleContent(selectedTemplate, inputs);
-        setGeneratedContent(fallbackContent);
-        setGenerationStats(prev => ({
-          tokensUsed: prev.tokensUsed + Math.floor(fallbackContent.length / 4),
-          timeElapsed: Date.now() - startTime,
-          requestCount: prev.requestCount + 1
-        }));
-        setError('API unavailable - showing sample content. Please check your API configuration.');
-      } catch (fallbackError) {
-        setError('Unable to generate content. Please try again.');
-      }
-    } finally {
-      setIsGenerating(false);
+      return;
     }
-  };
 
+    // Build the prompt
+    const prompt = buildPrompt(selectedTemplate, inputs);
+
+    // Gemini API call
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1500
+        }
+      })
+    });
+
+    if (!response.ok) {
+      let errorMessage = `API Error: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error?.message || errorMessage;
+      } catch {
+        // If can't parse error, use status
+      }
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    const content = result.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!content) {
+      throw new Error('No content generated from API');
+    }
+    
+    // Update stats and content
+    setGeneratedContent(content);
+    setGenerationStats(prev => ({
+      tokensUsed: prev.tokensUsed + (content.length / 4), // Approximate token count
+      timeElapsed: Date.now() - startTime,
+      requestCount: prev.requestCount + 1
+    }));
+
+  } catch (err) {
+    console.error('Generation error:', err);
+    setError(`Generation failed: ${err.message}`);
+    
+    // Fallback to mock data on any error
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      const fallbackContent = generateSampleContent(selectedTemplate, inputs);
+      setGeneratedContent(fallbackContent);
+      setGenerationStats(prev => ({
+        tokensUsed: prev.tokensUsed + Math.floor(fallbackContent.length / 4),
+        timeElapsed: Date.now() - startTime,
+        requestCount: prev.requestCount + 1
+      }));
+      setError('API unavailable - showing sample content. Please check your API configuration.');
+    } catch (fallbackError) {
+      setError('Unable to generate content. Please try again.');
+    }
+  } finally {
+    setIsGenerating(false);
+  }
+};
   const generateSampleContent = (templateType, inputs) => {
     const { productName, category, targetAudience, tone, features } = inputs;
     
